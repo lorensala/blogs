@@ -13,6 +13,9 @@ class Product extends Equatable {
   final String name;
   final double price;
 
+  // Implementing Equatable to compare objects by value
+  // This is used by ValueListenableBuilder to compare the previous and current value
+  // If the objects are equal, the builder is not called.
   @override
   List<Object?> get props => [name, price];
 
@@ -29,9 +32,11 @@ class Product extends Equatable {
   }
 }
 
-final cartNotifier = CartNotifier();
+// Global instance of CartNotifier
+final $cartNotifier = CartNotifier();
 
 class CartNotifier extends ValueNotifier<List<Product>> {
+  // The initial value of the notifier is an empty list
   CartNotifier() : super(const []);
 
   void add(Product product) {
@@ -43,10 +48,12 @@ class CartNotifier extends ValueNotifier<List<Product>> {
   }
 }
 
-final productFormNotifier = ProductFormNofier();
+// Global instance of ProductFormNotifier
+final $productFormNotifier = ProductFormNotifier();
 
-class ProductFormNofier extends ValueNotifier<Product> {
-  ProductFormNofier() : super(const Product('', 0));
+class ProductFormNotifier extends ValueNotifier<Product> {
+  // The initial value of the notifier is an empty product
+  ProductFormNotifier() : super(const Product('', 0));
 
   void setName(String name) {
     value = value.copyWith(name: name);
@@ -63,11 +70,12 @@ class ProductList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-        valueListenable: cartNotifier,
-        builder: (context, value, _) {
+        // Here we are listening to the global instance of CartNotifier
+        valueListenable: $cartNotifier,
+        builder: (context, products, _) {
           return ListView(
             shrinkWrap: true,
-            children: value
+            children: products
                 .map((product) => ProductItem(product))
                 .toList(growable: false),
           );
@@ -86,15 +94,19 @@ class ProductForm extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
-            onChanged: (value) => productFormNotifier.setName(value),
+            // We use the setName method of the global instance of ProductFormNotifier
+            // to update the name of the product
+            onChanged: (value) => $productFormNotifier.setName(value),
             decoration: const InputDecoration(
               labelText: 'Name',
             ),
           ),
           const SizedBox(height: 16),
           TextField(
+            // We use the setPrice method of the global instance of ProductFormNotifier
+            // to update the price of the product
             onChanged: (value) =>
-                productFormNotifier.setPrice(double.tryParse(value) ?? 0),
+                $productFormNotifier.setPrice(double.tryParse(value) ?? 0),
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(
               labelText: 'Price',
@@ -102,12 +114,13 @@ class ProductForm extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           ValueListenableBuilder(
-            valueListenable: productFormNotifier,
+            valueListenable: $productFormNotifier,
             builder: (context, product, _) {
               return ElevatedButton.icon(
                 icon: const Icon(Icons.shopping_cart),
                 onPressed:
-                    product.isEmpty ? null : () => cartNotifier.add(product),
+                    // If the product is empty, we disable the button
+                    product.isEmpty ? null : () => $cartNotifier.add(product),
                 label: const Text('Add to cart'),
               );
             },
@@ -128,7 +141,9 @@ class ProductItem extends StatelessWidget {
     return ListTile(
       title: Text(product.name),
       trailing: IconButton(
-        onPressed: () => cartNotifier.remove(product),
+        // We use the remove method of the global instance of CartNotifier
+        // to remove the product from the cart
+        onPressed: () => $cartNotifier.remove(product),
         icon: const Icon(Icons.remove_circle),
       ),
       subtitle: Text('\$${product.price}'),
@@ -174,10 +189,11 @@ class MyHomePage extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: ValueListenableBuilder(
-              valueListenable: cartNotifier,
-              builder: (context, value, _) {
+              valueListenable: $cartNotifier,
+              builder: (context, products, _) {
                 return Text(
-                  'Added to cart (${value.length})',
+                  // We are displaying the number of products in the cart
+                  'Added to cart (${products.length})',
                   style: Theme.of(context).textTheme.titleLarge,
                 );
               }),
